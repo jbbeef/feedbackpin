@@ -1,0 +1,1 @@
+// TODO: Browser-side Supabase client (uses NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY)

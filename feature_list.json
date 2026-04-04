@@ -1,0 +1,253 @@
+{
+  "features": [
+    {
+      "id": "F001",
+      "category": "auth",
+      "description": "Owner can sign up with email and password",
+      "steps": [
+        "Navigate to /login",
+        "Click 'Sign up' tab",
+        "Enter email and password",
+        "Submit form",
+        "Verify redirect to /dashboard"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F002",
+      "category": "auth",
+      "description": "Owner can log in with email and password",
+      "steps": [
+        "Navigate to /login",
+        "Enter existing email and password",
+        "Submit form",
+        "Verify redirect to /dashboard"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F003",
+      "category": "auth",
+      "description": "Owner can log out",
+      "steps": [
+        "Log in as owner",
+        "Click logout button",
+        "Verify redirect to /login",
+        "Verify accessing /dashboard redirects to /login"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F004",
+      "category": "project_creation",
+      "description": "Owner can create a project by pasting a URL",
+      "steps": [
+        "Navigate to /projects/new",
+        "Select 'URL' type",
+        "Paste a valid URL",
+        "Submit form",
+        "Verify project appears in /dashboard"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F005",
+      "category": "project_creation",
+      "description": "Owner can create a project by uploading an image",
+      "steps": [
+        "Navigate to /projects/new",
+        "Select 'Image' type",
+        "Upload a PNG or JPG file",
+        "Submit form",
+        "Verify project appears in /dashboard"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F006",
+      "category": "project_creation",
+      "description": "Owner can create a project by uploading a PDF",
+      "steps": [
+        "Navigate to /projects/new",
+        "Select 'PDF' type",
+        "Upload a PDF file",
+        "Submit form",
+        "Verify project appears in /dashboard"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F007",
+      "category": "screenshot_capture",
+      "description": "Screenshot is captured automatically after URL project is created",
+      "steps": [
+        "Create a URL project",
+        "Navigate to /projects/[id]",
+        "Verify a screenshot image is displayed on the canvas",
+        "Verify projects.screenshot_url is populated in the database"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F008",
+      "category": "screenshot_capture",
+      "description": "Uploaded image is displayed as the canvas for image projects",
+      "steps": [
+        "Create an image project",
+        "Navigate to /projects/[id]",
+        "Verify the uploaded image is displayed on the canvas"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F009",
+      "category": "share_link",
+      "description": "Owner can generate a shareable review link",
+      "steps": [
+        "Navigate to /projects/[id]",
+        "Click 'Share' button",
+        "Verify a unique review URL is displayed and can be copied"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F010",
+      "category": "share_link",
+      "description": "Shareable link grants public access without login",
+      "steps": [
+        "Copy the review link from /projects/[id]",
+        "Open the link in an incognito window",
+        "Verify /review/[token] loads the project canvas without prompting for login"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F011",
+      "category": "reviewer_canvas",
+      "description": "Reviewer can see the project screenshot on the canvas",
+      "steps": [
+        "Open /review/[token] as unauthenticated user",
+        "Verify the screenshot or uploaded file is visible"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F012",
+      "category": "reviewer_canvas",
+      "description": "Reviewer can click anywhere on the canvas to place a comment pin",
+      "steps": [
+        "Open /review/[token]",
+        "Click on the canvas",
+        "Verify a comment input appears anchored to the click position",
+        "Verify the pin position is stored as x_percent and y_percent"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F013",
+      "category": "comments",
+      "description": "Reviewer can submit a comment with their name",
+      "steps": [
+        "Click on the canvas at /review/[token]",
+        "Enter display name and comment body",
+        "Submit comment",
+        "Verify pin appears on canvas",
+        "Verify comment appears in sidebar"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F014",
+      "category": "comments",
+      "description": "Comments appear in real time for all viewers",
+      "steps": [
+        "Open /review/[token] in two browser windows",
+        "Submit a comment in window 1",
+        "Verify the comment appears in window 2 without page reload"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F015",
+      "category": "comments",
+      "description": "Reviewer can reply to an existing comment",
+      "steps": [
+        "Open a comment thread in the sidebar",
+        "Click 'Reply'",
+        "Enter a reply and submit",
+        "Verify reply appears nested under the parent comment"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F016",
+      "category": "comments",
+      "description": "Owner can mark a comment as resolved",
+      "steps": [
+        "Log in as owner",
+        "Navigate to /projects/[id]",
+        "Click 'Resolve' on a comment",
+        "Verify pin changes to resolved state",
+        "Verify comments.resolved is true in the database"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F017",
+      "category": "comments",
+      "description": "Owner can reopen a resolved comment",
+      "steps": [
+        "Log in as owner",
+        "Find a resolved comment",
+        "Click 'Reopen'",
+        "Verify comments.resolved is false in the database"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F018",
+      "category": "dashboard",
+      "description": "Owner dashboard lists all their projects",
+      "steps": [
+        "Log in as owner",
+        "Navigate to /dashboard",
+        "Verify all created projects are listed"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F019",
+      "category": "dashboard",
+      "description": "Dashboard shows comment count per project",
+      "steps": [
+        "Log in as owner",
+        "Navigate to /dashboard",
+        "Verify each project card displays the number of comments"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F020",
+      "category": "dashboard",
+      "description": "Owner can click a project card to open the project",
+      "steps": [
+        "Log in as owner",
+        "Navigate to /dashboard",
+        "Click a project card",
+        "Verify redirect to /projects/[id]"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F021",
+      "category": "payments",
+      "description": "Stripe checkout session can be created (placeholder)",
+      "steps": [
+        "Trigger Stripe checkout flow (UI TBD in Phase 3)",
+        "Verify a Stripe checkout session is created without errors",
+        "Verify redirect to Stripe hosted checkout page"
+      ],
+      "passes": false
+    }
+  ]
+}
