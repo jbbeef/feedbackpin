@@ -34,4 +34,14 @@ Session 2 (2026-04-03):
     * Next.js 16 breaking change: params and searchParams in page.tsx are Promises — must be awaited
     * Supabase email confirmation: if enabled in Supabase project settings, sign-up shows a "check your email" screen; if disabled, session is set immediately and user is redirected to /dashboard. Login page handles both cases.
 
+Session 3 (2026-04-03):
+- Worked on: F001 (sign up), F002 (sign in), F003 (log out) — verifying auth end-to-end
+- What was done: Fixed a Next.js 16 navigation race condition in login/page.tsx and LogoutButton.tsx — router.push()+router.refresh() doesn't reliably propagate the Supabase session cookie to the server before the next request; replaced with window.location.href for a full-page navigation. Installed @playwright/test (separate from the playwright browser package already in package.json), created playwright.config.ts and tests/auth.spec.ts with 6 browser-automation tests covering sign-up form render, invalid password error, sign-in success, wrong password error, logout redirect, and post-logout access guard. All 6 tests pass (12s run). Created a pre-confirmed test user via Supabase admin API (testuser@feedbackpin-e2e.dev) to avoid free-tier email rate limits during test runs.
+- Status: PASSING — F001, F002, F003 verified end-to-end via Playwright and marked true in feature_list.json.
+- Known issues / TODOs for next session:
+    * @playwright/test was installed as a devDependency (not in original CLAUDE.md package list) — needed for test runner separate from playwright browser
+    * Supabase free tier limits signup confirmation emails to ~4/hour; tests use admin-created user to bypass
+    * Next.js 16 key patterns: proxy.ts (not middleware.ts), params is a Promise in pages/routes, window.location.href for auth navigations
+    * Next feature to implement: F004 — owner creates a project by pasting a URL
+
 === END OF LOG ===

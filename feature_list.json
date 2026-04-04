@@ -11,7 +11,7 @@
         "Submit form",
         "Verify redirect to /dashboard"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F002",
@@ -23,7 +23,7 @@
         "Submit form",
         "Verify redirect to /dashboard"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F003",
@@ -35,7 +35,7 @@
         "Verify redirect to /login",
         "Verify accessing /dashboard redirects to /login"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F004",

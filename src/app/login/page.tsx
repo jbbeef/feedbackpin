@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Tab = "signin" | "signup";
@@ -12,7 +11,6 @@ const supabaseConfigured =
 
 /** Auth page — email/password sign in and sign up via Supabase Auth. */
 export default function LoginPage() {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,8 +45,7 @@ export default function LoginPage() {
           data: { user },
         } = await supabase!.auth.getUser();
         if (user) {
-          router.push("/dashboard");
-          router.refresh();
+          window.location.href = "/dashboard";
         }
       }
     } else {
@@ -59,8 +56,9 @@ export default function LoginPage() {
       if (signinError) {
         setError(signinError.message);
       } else {
-        router.push("/dashboard");
-        router.refresh();
+        // Full-page navigation ensures the auth cookie is sent with the next
+        // server request — router.push() + refresh() has a race on Next.js 16.
+        window.location.href = "/dashboard";
       }
     }
 
