@@ -30,6 +30,7 @@ export type Database = {
           screenshot_url?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       comments: {
         Row: {
@@ -65,6 +66,7 @@ export type Database = {
           parent_id?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       share_tokens: {
         Row: {
@@ -85,6 +87,7 @@ export type Database = {
           token?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

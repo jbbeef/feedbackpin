@@ -45,3 +45,14 @@ Session 3 (2026-04-03):
     * Next feature to implement: F004 — owner creates a project by pasting a URL
 
 === END OF LOG ===
+
+Session 4 (2026-04-03):
+Worked on: F004 — Owner can create a project by pasting a URL
+What was done: Implemented POST /api/projects (create) and GET /api/projects (list) route handlers with typed responses and auth guards. Built the /projects/new client page with a project-name field, URL/Image/PDF type selector, and URL input; Image/PDF types show a "coming soon" placeholder. Updated the dashboard to fetch projects with comment counts via embedded relation and render ProjectCard components. Fixed the Database type in types.ts to include Relationships: [] on each table (required by postgrest-js v2 GenericTable). Fixed playwright.config.ts to use workers: 1 to prevent session conflicts with the shared test user. Wrote 4 Playwright tests for F004; all 10 tests pass.
+Status: PASSING — F004 verified end-to-end via Playwright and marked true in feature_list.json.
+Known issues / TODOs for next session:
+    * Next feature: F005 (image upload) or F007 (screenshot capture after URL project creation)
+    * The dashboard uses as unknown as cast for the comments(count) embedded relation — Supabase JS v2 types don't propagate embedded count queries through our manual types
+    * playwright.config.ts set to workers: 1 since all tests share one Supabase test user
+
+=== END OF LOG ===

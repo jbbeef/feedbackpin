@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "./LogoutButton";
+import ProjectCard from "@/components/ProjectCard";
+import type { Database } from "@/lib/supabase/types";
 
-/** Owner dashboard — lists projects with comment counts. Protected: requires auth. */
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type ProjectWithCount = ProjectRow & { comments: { count: number }[] };
+
+/** Owner dashboard — lists all projects with comment counts. Protected: requires auth. */
 export default async function DashboardPage() {
   let supabase;
   try {
@@ -18,6 +23,15 @@ export default async function DashboardPage() {
   if (!user) {
     redirect("/login");
   }
+
+  // Fetch projects with a count of their comments via embedded relation
+  const { data: rawProjects } = await supabase
+    .from("projects")
+    .select("*, comments(count)")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const projects = rawProjects as unknown as ProjectWithCount[] | null;
 
   return (
     <div className="min-h-full bg-zinc-50">
@@ -40,9 +54,24 @@ export default async function DashboardPage() {
           </a>
         </div>
 
-        <p className="text-zinc-500 text-sm">
-          No projects yet. Create one to get started.
-        </p>
+        {!projects || projects.length === 0 ? (
+          <p className="text-zinc-500 text-sm">
+            No projects yet. Create one to get started.
+          </p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => {
+              const commentCount = project.comments?.[0]?.count ?? 0;
+              return (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  commentCount={commentCount}
+                />
+              );
+            })}
+          </div>
+        )}
       </main>
     </div>
   );
