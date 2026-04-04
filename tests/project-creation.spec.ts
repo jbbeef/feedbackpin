@@ -1,3 +1,4 @@
+import path from 'path';
 import { test, expect, type Page } from '@playwright/test';
 
 const CONFIRMED_EMAIL = 'testuser@feedbackpin-e2e.dev';
@@ -29,17 +30,17 @@ test.describe('F004 – create project by URL', () => {
     await expect(page.getByRole('button', { name: 'Create project' })).toBeVisible();
   });
 
-  test('URL type button is active by default; image/PDF types show upload placeholder', async ({ page }) => {
+  test('URL type is active by default; Image shows file input; PDF shows placeholder', async ({ page }) => {
     await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
-    // Switch to Image tab — should show placeholder, not URL input
+    // Switch to Image tab — should show file input (F005 implemented), not URL input
     await page.getByRole('button', { name: 'Image' }).click();
     await expect(page.getByLabel('URL to capture')).not.toBeVisible();
-    await expect(page.getByText('Image upload coming soon.')).toBeVisible();
+    await expect(page.getByLabel('Image file')).toBeVisible();
 
-    // Switch to PDF tab
+    // Switch to PDF tab — still shows placeholder
     await page.getByRole('button', { name: 'PDF' }).click();
     await expect(page.getByText('PDF upload coming soon.')).toBeVisible();
 
@@ -81,5 +82,73 @@ test.describe('F004 – create project by URL', () => {
 
     // Should stay on /projects/new
     await expect(page).toHaveURL('/projects/new');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F005 — Owner can create a project by uploading an image
+// ---------------------------------------------------------------------------
+test.describe('F005 – create project by image upload', () => {
+  const TEST_IMAGE = path.resolve(__dirname, 'fixtures/test-image.png');
+
+  test('Image tab shows a file input with accepted image types', async ({ page }) => {
+    await signInViaForm(page);
+    await page.goto('/projects/new');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Image' }).click();
+
+    const fileInput = page.locator('input[type="file"]');
+    await expect(fileInput).toBeAttached();
+
+    const accept = await fileInput.getAttribute('accept');
+    expect(accept).toContain('image/png');
+    expect(accept).toContain('image/jpeg');
+  });
+
+  test('Create project button is disabled without a file selected', async ({ page }) => {
+    await signInViaForm(page);
+    await page.goto('/projects/new');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Image' }).click();
+    await page.getByLabel('Project name').fill('No file project');
+
+    await expect(page.getByRole('button', { name: 'Create project' })).toBeDisabled();
+  });
+
+  test('Selecting a file enables the Create project button and shows filename', async ({ page }) => {
+    await signInViaForm(page);
+    await page.goto('/projects/new');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Image' }).click();
+    await page.getByLabel('Project name').fill('Image project');
+
+    await page.locator('input[type="file"]').setInputFiles(TEST_IMAGE);
+
+    await expect(page.getByText('test-image.png')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create project' })).toBeEnabled();
+  });
+
+  test('creating an image project uploads file and appears in /dashboard', async ({ page }) => {
+    await signInViaForm(page);
+    await page.goto('/projects/new');
+    await page.waitForLoadState('networkidle');
+
+    const projectName = `Image Project ${Date.now()}`;
+    await page.getByLabel('Project name').fill(projectName);
+    await page.getByRole('button', { name: 'Image' }).click();
+
+    await page.locator('input[type="file"]').setInputFiles(TEST_IMAGE);
+    await expect(page.getByRole('button', { name: 'Create project' })).toBeEnabled();
+
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    // Should redirect to dashboard after upload + project creation
+    await expect(page).toHaveURL('/dashboard', { timeout: 30000 });
+
+    // The new project card should appear
+    await expect(page.getByText(projectName)).toBeVisible({ timeout: 5000 });
   });
 });

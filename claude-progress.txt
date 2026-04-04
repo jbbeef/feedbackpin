@@ -56,3 +56,14 @@ Known issues / TODOs for next session:
     * playwright.config.ts set to workers: 1 since all tests share one Supabase test user
 
 === END OF LOG ===
+
+Session 5 (2026-04-04):
+Worked on: F005 — Owner can create a project by uploading an image
+What was done: Added image upload support to /projects/new. Created a server-side API route (POST /api/projects/upload) that authenticates the user, validates the file (PNG/JPG/WebP, ≤20 MB), and uploads directly to Supabase Storage via the REST API with the service role key as the Authorization header (bypasses storage RLS). The POST /api/projects route was extended to accept an optional screenshot_url field. Created the project-uploads Supabase Storage bucket via the Storage management API. Added tests/fixtures/test-image.png for Playwright tests. Updated the F004 test to reflect the new Image UI (file input instead of "coming soon" placeholder), and added 4 new Playwright tests for F005. Key insight: @supabase/supabase-js createClient with service_role key still hits RLS on storage.objects; the workaround is to use the Supabase Storage REST API directly with Authorization: Bearer {service_role_key}.
+Status: PASSING — F005 verified end-to-end via Playwright (14/14 tests pass) and marked true in feature_list.json.
+Known issues / TODOs for next session:
+    * Storage RLS policies in 002_storage.sql were not applied (not needed since the upload route uses the service role key directly via REST API)
+    * @supabase/supabase-js service role client does not bypass storage RLS in SSR context — direct REST API call is the workaround
+    * Next feature: F006 (PDF upload) or F007 (screenshot capture for URL projects) — F007 depends on a Railway worker; F006 can follow same upload pattern
+
+=== END OF LOG ===

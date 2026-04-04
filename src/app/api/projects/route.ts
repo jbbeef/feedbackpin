@@ -72,7 +72,12 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { name?: unknown; type?: unknown; source_url?: unknown };
+  let body: {
+    name?: unknown;
+    type?: unknown;
+    source_url?: unknown;
+    screenshot_url?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -82,7 +87,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, type, source_url } = body;
+  const { name, type, source_url, screenshot_url } = body;
 
   if (typeof name !== "string" || name.trim().length === 0) {
     return NextResponse.json<ProjectsPostResponse>(
@@ -122,6 +127,8 @@ export async function POST(request: Request) {
       name: name.trim(),
       type,
       source_url: typeof source_url === "string" ? source_url.trim() : null,
+      screenshot_url:
+        typeof screenshot_url === "string" ? screenshot_url.trim() : null,
     })
     .select()
     .single();

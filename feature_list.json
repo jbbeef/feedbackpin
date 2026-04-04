@@ -61,7 +61,7 @@
         "Submit form",
         "Verify project appears in /dashboard"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F006",
