@@ -86,7 +86,7 @@
         "Verify a screenshot image is displayed on the canvas",
         "Verify projects.screenshot_url is populated in the database"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F008",

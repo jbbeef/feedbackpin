@@ -8,9 +8,19 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     headless: true,
   },
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true,
-  },
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:3000',
+      reuseExistingServer: true,
+    },
+    {
+      // Screenshot worker — runs Playwright internally; must start before tests
+      command: 'node --experimental-strip-types src/workers/screenshot.ts',
+      url: 'http://localhost:3001/health',
+      reuseExistingServer: true,
+      // Allow up to 30s for the worker to start
+      timeout: 30000,
+    },
+  ],
 });

@@ -140,6 +140,23 @@ export async function POST(request: Request) {
     );
   }
 
+  // For URL projects, trigger screenshot capture asynchronously (fire-and-forget).
+  // The worker uploads the screenshot and updates projects.screenshot_url independently.
+  // SCREENSHOT_WORKER_URL must be set in .env.local (local dev) or environment (Railway).
+  if (type === "url" && data && process.env.SCREENSHOT_WORKER_URL) {
+    const workerUrl = process.env.SCREENSHOT_WORKER_URL;
+    const projectId = data.id;
+    const captureUrl = typeof source_url === "string" ? source_url.trim() : "";
+    // Fire-and-forget: do not await; do not let errors block the response
+    fetch(workerUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, sourceUrl: captureUrl }),
+    }).catch(() => {
+      // Worker unavailable — screenshot_url remains null; not a fatal error
+    });
+  }
+
   return NextResponse.json<ProjectsPostResponse>(
     { project: data },
     { status: 201 }

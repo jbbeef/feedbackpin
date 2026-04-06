@@ -67,3 +67,22 @@ Known issues / TODOs for next session:
     * Next feature: F006 (PDF upload) or F007 (screenshot capture for URL projects) — F007 depends on a Railway worker; F006 can follow same upload pattern
 
 === END OF LOG ===
+
+Session 6 (2026-04-05):
+Worked on: CLAUDE.md architectural update + F007 — Screenshot captured automatically after URL project creation
+What was done:
+  - Updated CLAUDE.md to document the Supabase Storage RLS workaround: the @supabase/supabase-js service role client still triggers RLS on storage.objects in SSR context; the fix is calling the Supabase Storage REST API directly with Authorization: Bearer {service_role_key}.
+  - Implemented src/workers/screenshot.ts: a standalone HTTP server (port 3001) that accepts POST / with { projectId, sourceUrl }, captures a full-page screenshot via Playwright chromium, uploads to Supabase Storage via REST API, and updates projects.screenshot_url via PostgREST. Loads .env.local automatically in non-production. Can be started with: node --experimental-strip-types src/workers/screenshot.ts
+  - Added SCREENSHOT_WORKER_URL=http://localhost:3001 to .env.local.
+  - Updated playwright.config.ts to start the screenshot worker as a second webServer entry alongside npm run dev; Playwright manages the worker lifecycle during test runs.
+  - Implemented GET/PATCH/DELETE /api/projects/[id] route with auth guard and typed responses.
+  - Extended POST /api/projects to fire-and-forget the screenshot worker after creating a URL project (uses SCREENSHOT_WORKER_URL env var; silently no-ops if unavailable).
+  - Implemented /projects/[id] page: fetches project data, shows a spinner while screenshot_url is null, polls every 2s (up to 60s) until screenshot appears, then renders the image with data-testid="project-screenshot".
+  - Added tests/screenshot.spec.ts with 3 Playwright tests for F007. All 17 tests pass (1.5 min run).
+Status: PASSING — F007 verified end-to-end via Playwright and marked true in feature_list.json.
+Known issues / TODOs for next session:
+  - Node.js 24 emits a MODULE_TYPELESS_PACKAGE_JSON warning when running the worker (harmless — can be silenced by adding "type":"module" to package.json, but this would require testing for breakage in other parts of the project).
+  - The screenshot worker uses fire-and-forget from the API route: screenshot_url is null on initial project creation and populates asynchronously. The /projects/[id] page polls until it appears.
+  - Next feature: F008 (uploaded image displayed as canvas) or F009 (generate shareable review link).
+
+=== END OF LOG ===

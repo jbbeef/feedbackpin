@@ -114,6 +114,27 @@ All data access is controlled by Row Level Security policies. Owners can only se
 ### App Router only
 No Pages Router. All routing uses Next.js App Router conventions (`page.tsx`, `layout.tsx`, Route Handlers `route.ts`).
 
+### Supabase Storage uploads must use the REST API directly (not the JS SDK) in server routes
+`@supabase/supabase-js` `createClient` with the service role key still triggers "new row violates row-level security policy" on `storage.objects` when called from a Next.js Route Handler, even with `auth: { persistSession: false }`. The root cause is that `@supabase/ssr`'s `createServerClient` propagates the user session from cookies and that session JWT overrides the service role key in the Authorization header sent to the Storage API.
+
+**The fix:** call the Supabase Storage REST API directly via `fetch`:
+
+```ts
+const res = await fetch(
+  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/project-uploads/${fileName}`,
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      "Content-Type": file.type,
+    },
+    body: buffer,
+  }
+);
+```
+
+This is implemented in `src/app/api/projects/upload/route.ts`. Apply the same pattern for any future server-side storage writes.
+
 ## What is Explicitly Out of Scope for MVP
 
 - Team/workspace accounts (single owner per project only)
