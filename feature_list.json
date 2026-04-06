@@ -108,7 +108,7 @@
         "Click 'Share' button",
         "Verify a unique review URL is displayed and can be copied"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F010",
@@ -119,7 +119,7 @@
         "Open the link in an incognito window",
         "Verify /review/[token] loads the project canvas without prompting for login"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F011",
@@ -129,7 +129,7 @@
         "Open /review/[token] as unauthenticated user",
         "Verify the screenshot or uploaded file is visible"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F012",
@@ -141,7 +141,7 @@
         "Verify a comment input appears anchored to the click position",
         "Verify the pin position is stored as x_percent and y_percent"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F013",
@@ -154,7 +154,7 @@
         "Verify pin appears on canvas",
         "Verify comment appears in sidebar"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F014",

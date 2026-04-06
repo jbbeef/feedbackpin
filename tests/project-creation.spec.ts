@@ -1,25 +1,13 @@
 import path from 'path';
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-const CONFIRMED_EMAIL = 'testuser@feedbackpin-e2e.dev';
-const CONFIRMED_PASSWORD = 'TestPassword123!';
-
-/** Signs in and waits for /dashboard. */
-async function signInViaForm(page: Page) {
-  await page.goto('/login');
-  await page.waitForLoadState('networkidle');
-  await page.getByLabel('Email').fill(CONFIRMED_EMAIL);
-  await page.getByLabel('Password').fill(CONFIRMED_PASSWORD);
-  await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-}
+// Auth state is pre-loaded via global setup — no per-test sign-in needed.
 
 // ---------------------------------------------------------------------------
 // F004 — Owner can create a project by pasting a URL
 // ---------------------------------------------------------------------------
 test.describe('F004 – create project by URL', () => {
   test('/projects/new renders the form with type selector and URL input', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -31,7 +19,6 @@ test.describe('F004 – create project by URL', () => {
   });
 
   test('URL type is active by default; Image shows file input; PDF shows placeholder', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -50,7 +37,6 @@ test.describe('F004 – create project by URL', () => {
   });
 
   test('creating a URL project redirects to /dashboard and shows the project', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -67,7 +53,6 @@ test.describe('F004 – create project by URL', () => {
   });
 
   test('submitting with invalid URL shows an error', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -92,7 +77,6 @@ test.describe('F005 – create project by image upload', () => {
   const TEST_IMAGE = path.resolve(__dirname, 'fixtures/test-image.png');
 
   test('Image tab shows a file input with accepted image types', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -107,7 +91,6 @@ test.describe('F005 – create project by image upload', () => {
   });
 
   test('Create project button is disabled without a file selected', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -118,7 +101,6 @@ test.describe('F005 – create project by image upload', () => {
   });
 
   test('Selecting a file enables the Create project button and shows filename', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -132,7 +114,6 @@ test.describe('F005 – create project by image upload', () => {
   });
 
   test('creating an image project uploads file and appears in /dashboard', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 

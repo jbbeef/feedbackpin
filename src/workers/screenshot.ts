@@ -77,7 +77,7 @@ async function processScreenshotJob(
         Authorization: `Bearer ${serviceRoleKey}`,
         "Content-Type": "image/png",
       },
-      body: imgBuffer,
+      body: Buffer.from(imgBuffer) as unknown as BodyInit,
     }
   );
 

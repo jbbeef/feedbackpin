@@ -1,17 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-const CONFIRMED_EMAIL = 'testuser@feedbackpin-e2e.dev';
-const CONFIRMED_PASSWORD = 'TestPassword123!';
-
-/** Signs in and waits for /dashboard. */
-async function signInViaForm(page: Page) {
-  await page.goto('/login');
-  await page.waitForLoadState('networkidle');
-  await page.getByLabel('Email').fill(CONFIRMED_EMAIL);
-  await page.getByLabel('Password').fill(CONFIRMED_PASSWORD);
-  await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
-}
+// Auth state is pre-loaded via global setup — no per-test sign-in needed.
 
 /** Creates a URL project and returns the project ID from the redirect URL. */
 async function createUrlProject(page: Page, name: string): Promise<string> {
@@ -35,7 +24,6 @@ async function createUrlProject(page: Page, name: string): Promise<string> {
 // ---------------------------------------------------------------------------
 test.describe('F007 – screenshot capture for URL projects', () => {
   test('/projects/[id] shows a loading spinner while screenshot is pending', async ({ page }) => {
-    await signInViaForm(page);
     await page.goto('/projects/new');
     await page.waitForLoadState('networkidle');
 
@@ -55,8 +43,6 @@ test.describe('F007 – screenshot capture for URL projects', () => {
   });
 
   test('screenshot appears on canvas within 60 seconds of URL project creation', async ({ page }) => {
-    await signInViaForm(page);
-
     const projectName = `F007 Screenshot Test ${Date.now()}`;
     await createUrlProject(page, projectName);
 
@@ -71,8 +57,6 @@ test.describe('F007 – screenshot capture for URL projects', () => {
   });
 
   test('screenshot_url is stored in the database after capture', async ({ page }) => {
-    await signInViaForm(page);
-
     const projectName = `F007 DB Check ${Date.now()}`;
     const projectId = await createUrlProject(page, projectName);
 

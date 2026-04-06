@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ProjectGetResponse } from "@/app/api/projects/[id]/route";
+import type { ShareResponse } from "@/app/api/projects/[id]/share/route";
 import type { Database } from "@/lib/supabase/types";
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
@@ -13,6 +14,10 @@ export default function ProjectPage({ params }: Props) {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<ProjectRow | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // Resolve the dynamic params Promise (Next.js 16 breaking change)
   useEffect(() => {
@@ -75,6 +80,33 @@ export default function ProjectPage({ params }: Props) {
     };
   }, [projectId]);
 
+  async function handleShare() {
+    if (!projectId) return;
+    setShareLoading(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/share`, {
+        method: "POST",
+      });
+      const json: ShareResponse = await res.json();
+      if ("error" in json) {
+        setError(json.error);
+      } else {
+        setShareUrl(`${window.location.origin}/review/${json.token}`);
+      }
+    } catch {
+      setError("Failed to generate share link");
+    } finally {
+      setShareLoading(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!shareUrl) return;
+    await navigator.clipboard.writeText(shareUrl);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
@@ -100,7 +132,34 @@ export default function ProjectPage({ params }: Props) {
         <span className="text-sm text-zinc-500 truncate max-w-sm">
           {project.name}
         </span>
+        <button
+          onClick={handleShare}
+          disabled={shareLoading}
+          data-testid="share-button"
+          className="ml-4 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+        >
+          {shareLoading ? "Generating…" : "Share"}
+        </button>
       </header>
+
+      {shareUrl && (
+        <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-3 flex items-center gap-3">
+          <span className="text-sm text-indigo-700 font-medium">Review link:</span>
+          <input
+            readOnly
+            value={shareUrl}
+            data-testid="share-url"
+            className="flex-1 rounded border border-indigo-200 bg-white px-3 py-1.5 text-sm text-zinc-700 font-mono focus:outline-none"
+          />
+          <button
+            onClick={handleCopy}
+            data-testid="copy-button"
+            className="inline-flex items-center rounded-md border border-indigo-300 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 transition-colors"
+          >
+            {shareCopied ? "Copied!" : "Copy"}
+          </button>
+        </div>
+      )}
 
       <main className="flex-1 flex flex-col items-center justify-start px-6 py-8">
         <div className="w-full max-w-5xl">

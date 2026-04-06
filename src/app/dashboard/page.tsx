@@ -29,7 +29,8 @@ export default async function DashboardPage() {
     .from("projects")
     .select("*, comments(count)")
     .eq("owner_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   const projects = rawProjects as unknown as ProjectWithCount[] | null;
 

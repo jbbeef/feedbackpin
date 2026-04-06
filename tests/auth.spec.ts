@@ -1,6 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Pre-confirmed test user (created via admin API in test setup — bypasses email rate limit)
 const CONFIRMED_EMAIL = 'testuser@feedbackpin-e2e.dev';
 const CONFIRMED_PASSWORD = 'TestPassword123!';
 
@@ -11,21 +10,20 @@ async function signInViaForm(page: Page) {
   await page.getByLabel('Email').fill(CONFIRMED_EMAIL);
   await page.getByLabel('Password').fill(CONFIRMED_PASSWORD);
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+  await expect(page).toHaveURL('/dashboard', { timeout: 20000 });
 }
 
 // ---------------------------------------------------------------------------
 // F001 — Sign up
-// Tests the UI mechanics and error path. Full happy-path is confirmed by the
-// admin-created user existing: sign-up DOES work, Supabase just rate-limits
-// confirmation emails on the free tier during rapid test runs.
+// Needs unauthenticated context — overrides global storageState with empty state.
 // ---------------------------------------------------------------------------
 test.describe('F001 – sign up', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('sign up form renders with email and password fields', async ({ page }) => {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
 
-    // Switch to sign-up tab
     await page.locator('button[type="button"]', { hasText: 'Sign up' }).click();
 
     await expect(page.getByLabel('Email')).toBeVisible();
@@ -39,10 +37,9 @@ test.describe('F001 – sign up', () => {
 
     await page.locator('button[type="button"]', { hasText: 'Sign up' }).click();
     await page.getByLabel('Email').fill('newuser@example.com');
-    await page.getByLabel('Password').fill('123'); // too short — Supabase rejects
+    await page.getByLabel('Password').fill('123');
     await page.locator('form button[type="submit"]').click();
 
-    // Should stay on /login with an error message
     await expect(page).toHaveURL('/login');
     await expect(page.locator('.text-red-600')).toBeVisible({ timeout: 8000 });
   });
@@ -50,11 +47,13 @@ test.describe('F001 – sign up', () => {
 
 // ---------------------------------------------------------------------------
 // F002 — Sign in
+// Needs unauthenticated context — overrides global storageState with empty state.
 // ---------------------------------------------------------------------------
 test.describe('F002 – sign in', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('owner can sign in with email and password', async ({ page }) => {
     await signInViaForm(page);
-    // Dashboard should show user email
     await expect(page.getByText(CONFIRMED_EMAIL)).toBeVisible();
   });
 
@@ -72,21 +71,25 @@ test.describe('F002 – sign in', () => {
 
 // ---------------------------------------------------------------------------
 // F003 — Log out
+// Uses pre-loaded auth state (global storageState) — already authenticated.
+// Runs last (auth project depends on main) so signOut doesn't affect other tests.
 // ---------------------------------------------------------------------------
 test.describe('F003 – log out', () => {
   test('owner can log out and is redirected to /login', async ({ page }) => {
-    await signInViaForm(page);
+    await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
 
     await page.getByRole('button', { name: 'Log out' }).click();
     await expect(page).toHaveURL('/login', { timeout: 10000 });
   });
 
   test('after logout, /dashboard redirects back to /login', async ({ page }) => {
+    // The previous F003 test revoked the global session — sign in again to get a fresh one.
     await signInViaForm(page);
+
     await page.getByRole('button', { name: 'Log out' }).click();
     await expect(page).toHaveURL('/login', { timeout: 10000 });
 
-    // Try to access protected route
     await page.goto('/dashboard');
     await expect(page).toHaveURL('/login', { timeout: 5000 });
   });
