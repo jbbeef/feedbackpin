@@ -225,3 +225,16 @@ Known issues / TODOs for next session:
   - F006 (PDF upload), F008 (image canvas), F014–F021 still pending.
 
 === END OF LOG ===
+
+Session 14 (2026-04-07):
+Worked on: Remove URL project type from frontend; update empty-state and create-flow copy
+What was done:
+  - projects/new/page.tsx: Removed "url" from ProjectType — now "image" | "pdf" only. Default type changed from "url" to "image". Removed sourceUrl state, the URL input field, and all url-conditional logic (canSubmit, form body). The API call no longer sends source_url for url projects. Subtitle updated: "Upload your file and share a link — your reviewers can leave feedback without signing in." Type selector now renders only two buttons: "A design file" and "A document". Backend routes untouched.
+  - ProjectGrid.tsx: Empty-state description updated from "Create your first feedback request to get started" to "Upload a design file or document and share it for feedback."
+  - npx tsc --noEmit passes with zero errors.
+Status: Complete — URL option fully removed from the create flow UI. No feature flags changed.
+Known issues / TODOs for next session:
+  - F004 (URL project creation) Playwright test will now fail if run, as the URL option is gone from the UI. Future session should update or remove that test.
+  - F006 (PDF upload), F008 (image canvas), F014–F021 still pending.
+
+=== END OF LOG ===

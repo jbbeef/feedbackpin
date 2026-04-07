@@ -4,23 +4,21 @@ import { useRef, useState } from "react";
 import type { ProjectsPostResponse } from "@/app/api/projects/route";
 import type { UploadResponse } from "@/app/api/projects/upload/route";
 
-type ProjectType = "url" | "image" | "pdf";
+type ProjectType = "image" | "pdf";
 
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 const MAX_FILE_SIZE_MB = 20;
 
 /** Human-readable label for the type selector buttons. */
 const typeLabels: Record<ProjectType, string> = {
-  url: "A website or app",
   image: "A design file",
   pdf: "A document",
 };
 
-/** Create feedback request wizard — lets owners create a request by URL, image, or PDF. */
+/** Create feedback request wizard — lets owners upload a design file or document for review. */
 export default function NewProjectPage() {
-  const [type, setType] = useState<ProjectType>("url");
+  const [type, setType] = useState<ProjectType>("image");
   const [name, setName] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +75,7 @@ export default function NewProjectPage() {
         body: JSON.stringify({
           name,
           type,
-          source_url: type === "url" ? sourceUrl : storagePath,
+          source_url: storagePath,
           screenshot_url: screenshotUrl,
         }),
       });
@@ -99,9 +97,8 @@ export default function NewProjectPage() {
   function canSubmit() {
     if (submitting) return false;
     if (!name.trim()) return false;
-    if (type === "url") return sourceUrl.trim().length > 0;
     if (type === "image") return imageFile !== null;
-    return false;
+    return false; // pdf not yet supported
   }
 
   const inputStyle: React.CSSProperties = {
@@ -189,14 +186,14 @@ export default function NewProjectPage() {
               lineHeight: 1.6,
             }}
           >
-            Give it a name and share a link with your reviewers — that&apos;s it.
+            Upload your file and share a link — your reviewers can leave feedback without signing in.
           </p>
 
           <form
             onSubmit={handleSubmit}
             style={{ display: "flex", flexDirection: "column", gap: 24 }}
           >
-            {/* Name field — prominent, no separate label (heading is the label) */}
+            {/* Name field */}
             <div>
               <label
                 htmlFor="name"
@@ -223,7 +220,7 @@ export default function NewProjectPage() {
               />
             </div>
 
-            {/* Type selector — conversational */}
+            {/* Type selector */}
             <div>
               <span
                 style={{
@@ -237,7 +234,7 @@ export default function NewProjectPage() {
                 What are you sharing?
               </span>
               <div style={{ display: "flex", gap: 8 }}>
-                {(["url", "image", "pdf"] as ProjectType[]).map((t) => (
+                {(["image", "pdf"] as ProjectType[]).map((t) => (
                   <button
                     key={t}
                     type="button"
@@ -261,35 +258,6 @@ export default function NewProjectPage() {
                 ))}
               </div>
             </div>
-
-            {/* URL input */}
-            {type === "url" && (
-              <div>
-                <label
-                  htmlFor="source_url"
-                  style={{
-                    display: "block",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: "var(--color-text-secondary)",
-                    marginBottom: 8,
-                  }}
-                >
-                  Page or site URL
-                </label>
-                <input
-                  id="source_url"
-                  type="url"
-                  required
-                  value={sourceUrl}
-                  onChange={(e) => setSourceUrl(e.target.value)}
-                  placeholder="Paste your page URL here"
-                  style={inputStyle}
-                  onFocus={inputFocus}
-                  onBlur={inputBlur}
-                />
-              </div>
-            )}
 
             {/* Image upload */}
             {type === "image" && (

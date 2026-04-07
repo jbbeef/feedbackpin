@@ -52,7 +52,7 @@ export default function ProjectGrid({ initialProjects }: Props) {
             margin: 0,
           }}
         >
-          Create your first feedback request to get started
+          Upload a design file or document and share it for feedback
         </p>
         <a
           href="/projects/new"
