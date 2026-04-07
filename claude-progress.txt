@@ -205,3 +205,23 @@ Known issues / TODOs for next session:
   - Existing Playwright tests (30/30) should still pass — CommentSidebar changes are additive (new optional props). No test covers F016/F017 yet; future session should add Playwright tests for resolve/reopen flow.
 
 === END OF LOG ===
+
+Session 13 (2026-04-07):
+Worked on: Language/UX/polish overhaul — no features added
+What was done:
+  LANGUAGE OVERHAUL (no feature_list.json changes — polish only):
+  - dashboard/page.tsx: "Projects" heading → "Your work"; "New project" → "New feedback request". Removed "Manage your website feedback projects" subtitle. Empty state rewritten warmly ("Nothing here yet / Create your first feedback request to get started").
+  - projects/new/page.tsx: Full UX rewrite. Heading "New project" → "What are you reviewing?" (26px, warmer). Added subtitle: "Give it a name and share a link…". Label "Project name" → "Give it a name". Type selector labels: "URL" → "A website or app", "Image" → "A design file", "PDF" → "A document". URL field label → "Page or site URL", placeholder → "Paste your page URL here". Submit button → "Start a feedback request" / "Starting…".
+  - review/[token]/page.tsx: Header redesigned — centre column now shows "You've been invited to give feedback" (primary, 13px weight 500) with the project name below it (tertiary, 12px). Spacer div balances the layout so the text stays visually centred.
+  - ProjectCard.tsx: Full rewrite. Type badge now shows human labels ("Website", "Image", "PDF") instead of raw db values. Restructured from a plain <a> to a div container with an <a> clickable area + absolutely-positioned trash icon button. Trash icon uses --color-danger on hover.
+  DELETE PROJECT:
+  - ProjectCard.tsx: Clicking the trash icon flips the card to a confirmation state (panel-enter animation). Confirmation reads "Delete this feedback request? This can't be undone." with a --color-danger "Delete" button and a secondary "Cancel" button. On confirm: calls DELETE /api/projects/[id], then invokes onDeleted(id) prop. Error message shown inline if delete fails. All transitions 150ms ease-out per design system.
+  - ProjectGrid.tsx: New client component. Accepts initialProjects from the server component dashboard, owns the mutable projects list in useState, passes onDeleted to each ProjectCard which filters the deleted id out of the list immediately — no page reload.
+  - dashboard/page.tsx: Converted from rendering ProjectCard directly to rendering <ProjectGrid initialProjects={...} />. Server component shell unchanged (auth redirect + data fetch stay server-side).
+  TypeScript: npx tsc --noEmit passes with zero errors after all changes.
+Status: Complete — all language, UX, and delete changes applied. No features marked. No existing tests broken (delete is additive; language changes to copy don't affect data-testid attributes used by Playwright).
+Known issues / TODOs for next session:
+  - Playwright tests do not yet cover the delete flow or new copy; future session should add those.
+  - F006 (PDF upload), F008 (image canvas), F014–F021 still pending.
+
+=== END OF LOG ===

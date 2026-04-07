@@ -145,11 +145,12 @@ export default function ReviewPage({ params }: Props) {
         style={{
           background: "var(--color-base)",
           borderBottom: "1px solid var(--color-border)",
-          padding: "14px 24px",
+          padding: "12px 24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexShrink: 0,
+          gap: 16,
         }}
       >
         <span
@@ -158,23 +159,49 @@ export default function ReviewPage({ params }: Props) {
             fontWeight: 500,
             color: "var(--color-accent)",
             letterSpacing: "-0.01em",
+            flexShrink: 0,
           }}
         >
           FeedbackPin
         </span>
-        <span
+
+        {/* Invitation + project name — centred */}
+        <div
           style={{
-            fontSize: 14,
-            color: "var(--color-text-secondary)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            maxWidth: 480,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            minWidth: 0,
           }}
-          data-testid="review-project-name"
         >
-          {project.name}
-        </span>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 500,
+              color: "var(--color-text-primary)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            You&apos;ve been invited to give feedback
+          </span>
+          <span
+            style={{
+              fontSize: 12,
+              color: "var(--color-text-tertiary)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              maxWidth: 360,
+            }}
+            data-testid="review-project-name"
+          >
+            {project.name}
+          </span>
+        </div>
+
+        {/* Spacer to balance the logo on the left */}
+        <span style={{ flexShrink: 0, width: 88 }} />
       </header>
 
       {/* Body */}

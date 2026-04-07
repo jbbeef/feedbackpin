@@ -9,7 +9,14 @@ type ProjectType = "url" | "image" | "pdf";
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 const MAX_FILE_SIZE_MB = 20;
 
-/** Create project wizard — lets owners create a project by URL, image, or PDF. */
+/** Human-readable label for the type selector buttons. */
+const typeLabels: Record<ProjectType, string> = {
+  url: "A website or app",
+  image: "A design file",
+  pdf: "A document",
+};
+
+/** Create feedback request wizard — lets owners create a request by URL, image, or PDF. */
 export default function NewProjectPage() {
   const [type, setType] = useState<ProjectType>("url");
   const [name, setName] = useState("");
@@ -77,7 +84,7 @@ export default function NewProjectPage() {
 
       const json: ProjectsPostResponse = await res.json();
       if (!res.ok || "error" in json) {
-        setError("error" in json ? json.error : "Failed to create project");
+        setError("error" in json ? json.error : "Failed to create feedback request");
         setSubmitting(false);
         return;
       }
@@ -161,23 +168,35 @@ export default function NewProjectPage() {
             animation: "panel-enter 200ms ease-out both",
           }}
         >
+          {/* Opening question — large, friendly */}
           <h1
             style={{
-              fontSize: 22,
+              fontSize: 26,
               fontWeight: 500,
               color: "var(--color-text-primary)",
-              margin: "0 0 32px",
-              letterSpacing: "-0.01em",
+              margin: "0 0 8px",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.3,
             }}
           >
-            New project
+            What are you reviewing?
           </h1>
+          <p
+            style={{
+              fontSize: 15,
+              color: "var(--color-text-tertiary)",
+              margin: "0 0 36px",
+              lineHeight: 1.6,
+            }}
+          >
+            Give it a name and share a link with your reviewers — that&apos;s it.
+          </p>
 
           <form
             onSubmit={handleSubmit}
             style={{ display: "flex", flexDirection: "column", gap: 24 }}
           >
-            {/* Project name */}
+            {/* Name field — prominent, no separate label (heading is the label) */}
             <div>
               <label
                 htmlFor="name"
@@ -189,7 +208,7 @@ export default function NewProjectPage() {
                   marginBottom: 8,
                 }}
               >
-                Project name
+                Give it a name
               </label>
               <input
                 id="name"
@@ -197,14 +216,14 @@ export default function NewProjectPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="My design review"
+                placeholder="e.g. Homepage redesign"
                 style={inputStyle}
                 onFocus={inputFocus}
                 onBlur={inputBlur}
               />
             </div>
 
-            {/* Type selector */}
+            {/* Type selector — conversational */}
             <div>
               <span
                 style={{
@@ -215,7 +234,7 @@ export default function NewProjectPage() {
                   marginBottom: 8,
                 }}
               >
-                Project type
+                What are you sharing?
               </span>
               <div style={{ display: "flex", gap: 8 }}>
                 {(["url", "image", "pdf"] as ProjectType[]).map((t) => (
@@ -229,14 +248,15 @@ export default function NewProjectPage() {
                       border: `1px solid ${type === t ? "var(--color-accent)" : "var(--color-border)"}`,
                       background: type === t ? "var(--color-accent-subtle)" : "var(--color-surface)",
                       color: type === t ? "var(--color-accent)" : "var(--color-text-secondary)",
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: 500,
-                      padding: "9px 0",
+                      padding: "10px 8px",
                       cursor: "pointer",
                       transition: "all 150ms ease-out",
+                      lineHeight: 1.3,
                     }}
                   >
-                    {t === "url" ? "URL" : t === "image" ? "Image" : "PDF"}
+                    {typeLabels[t]}
                   </button>
                 ))}
               </div>
@@ -255,7 +275,7 @@ export default function NewProjectPage() {
                     marginBottom: 8,
                   }}
                 >
-                  URL to capture
+                  Page or site URL
                 </label>
                 <input
                   id="source_url"
@@ -263,7 +283,7 @@ export default function NewProjectPage() {
                   required
                   value={sourceUrl}
                   onChange={(e) => setSourceUrl(e.target.value)}
-                  placeholder="https://example.com"
+                  placeholder="Paste your page URL here"
                   style={inputStyle}
                   onFocus={inputFocus}
                   onBlur={inputBlur}
@@ -284,7 +304,7 @@ export default function NewProjectPage() {
                     marginBottom: 8,
                   }}
                 >
-                  Image file
+                  Upload your design
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -346,11 +366,7 @@ export default function NewProjectPage() {
 
             {error && (
               <p
-                style={{
-                  fontSize: 13,
-                  color: "var(--color-danger)",
-                  margin: 0,
-                }}
+                style={{ fontSize: 13, color: "var(--color-danger)", margin: 0 }}
                 role="alert"
               >
                 {error}
@@ -381,7 +397,7 @@ export default function NewProjectPage() {
               }}
               className="active:[scale:0.97]"
             >
-              {submitting ? "Creating…" : "Create project"}
+              {submitting ? "Starting…" : "Start a feedback request"}
             </button>
 
             <a
