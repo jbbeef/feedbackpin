@@ -22,8 +22,8 @@ interface Props {
 
 /**
  * Interactive annotation canvas.
- * Clicking anywhere on the screenshot opens a comment form anchored to the click position.
- * Existing comments are shown as numbered pins.
+ * Clicking anywhere on the screenshot opens a comment form anchored to the
+ * click position. Existing comments are shown as numbered spring-animated pins.
  */
 export default function Canvas({
   screenshotUrl,
@@ -33,6 +33,7 @@ export default function Canvas({
   onCommentAdded,
 }: Props) {
   const [pendingPin, setPendingPin] = useState<PendingPin | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [authorName, setAuthorName] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("reviewerName") ?? "";
@@ -41,10 +42,12 @@ export default function Canvas({
   });
   const [commentBody, setCommentBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const nameIsKnown = authorName.trim().length > 0;
+
   function handleCanvasClick(e: React.MouseEvent<HTMLDivElement>) {
-    // Ignore clicks that originated inside a pin or the comment form
     const target = e.target as HTMLElement;
     if (target.closest("[data-pin]") || target.closest("[data-comment-form]")) {
       return;
@@ -54,6 +57,7 @@ export default function Canvas({
     const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
     const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
 
+    setHasInteracted(true);
     setPendingPin({ xPercent, yPercent });
     setCommentBody("");
     setSubmitError(null);
@@ -90,31 +94,37 @@ export default function Canvas({
 
       // Persist name for future comments
       localStorage.setItem("reviewerName", trimmedName);
+
+      // Close the form immediately so subsequent canvas clicks work right away,
+      // then show a brief floating toast as success feedback.
       onCommentAdded(json.comment);
       setPendingPin(null);
       setCommentBody("");
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 1800);
     } catch {
-      setSubmitError("Failed to save comment. Please try again.");
+      setSubmitError("Couldn't save your comment — please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  // Position the comment form to stay within the canvas bounds
+  // Position the form so it stays within the canvas bounds
   function formStyle(pin: PendingPin): React.CSSProperties {
-    const FORM_WIDTH_PCT = 28; // approximate % of canvas width
+    const FORM_WIDTH_PCT = 26;
     const left = Math.min(pin.xPercent, 100 - FORM_WIDTH_PCT);
     const top =
       pin.yPercent < 65
-        ? pin.yPercent + 4  // show below the pin
-        : pin.yPercent - 38; // show above the pin
+        ? pin.yPercent + 4   // below the pin
+        : pin.yPercent - 42; // above the pin
 
     return {
       position: "absolute",
       left: `${left}%`,
       top: `${top}%`,
       zIndex: 30,
-      width: "220px",
+      width: 240,
+      animation: "panel-enter 200ms ease-out both",
     };
   }
 
@@ -129,11 +139,81 @@ export default function Canvas({
       <img
         src={screenshotUrl}
         alt={`Screenshot of ${projectName}`}
-        className="w-full h-auto block rounded-lg shadow-lg border border-zinc-200"
+        className="w-full h-auto block rounded-xl"
+        style={{
+          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+          border: "1px solid var(--color-border)",
+          pointerEvents: "none",
+        }}
         data-testid="review-screenshot"
         draggable={false}
-        style={{ pointerEvents: "none" }}
       />
+
+      {/* Success toast — floats above canvas briefly after a comment is posted */}
+      {submitSuccess && (
+        <div
+          style={{
+            position: "absolute",
+            top: "5%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            pointerEvents: "none",
+            zIndex: 40,
+            animation: "panel-enter 200ms ease-out both",
+          }}
+        >
+          <div
+            style={{
+              background: "var(--color-success)",
+              color: "white",
+              fontSize: 13,
+              fontWeight: 500,
+              padding: "8px 16px",
+              borderRadius: 100,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="6.5" stroke="white" />
+              <path d="M4.5 7l2 2 3.5-3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Comment added
+          </div>
+        </div>
+      )}
+
+      {/* Click hint — visible before first interaction */}
+      {!hasInteracted && !pendingPin && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "5%",
+            left: "50%",
+            pointerEvents: "none",
+            animation: "click-hint 2.4s ease-in-out infinite",
+          }}
+        >
+          <div
+            style={{
+              background: "var(--color-text-primary)",
+              color: "var(--color-base)",
+              fontSize: 13,
+              fontWeight: 500,
+              padding: "8px 16px",
+              borderRadius: 100,
+              opacity: 0.82,
+              whiteSpace: "nowrap",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+            }}
+          >
+            Click anywhere to leave feedback
+          </div>
+        </div>
+      )}
 
       {/* Existing comment pins */}
       {comments.map((comment, index) => (
@@ -142,6 +222,7 @@ export default function Canvas({
           number={index + 1}
           xPercent={comment.x_percent}
           yPercent={comment.y_percent}
+          resolved={comment.resolved}
         />
       ))}
 
@@ -154,11 +235,23 @@ export default function Canvas({
             left: `${pendingPin.xPercent}%`,
             top: `${pendingPin.yPercent}%`,
             transform: "translate(-50%, -50%)",
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: "var(--color-accent)",
+            opacity: 0.6,
+            border: "2px solid rgba(255,255,255,0.9)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 12,
+            fontWeight: 500,
             zIndex: 20,
           }}
-          className="w-7 h-7 rounded-full bg-indigo-400 border-2 border-white shadow-md flex items-center justify-center"
         >
-          <span className="text-white text-xs font-bold">{comments.length + 1}</span>
+          {comments.length + 1}
         </div>
       )}
 
@@ -168,53 +261,161 @@ export default function Canvas({
           data-comment-form
           style={formStyle(pendingPin)}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-lg shadow-xl border border-zinc-200 p-3"
         >
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              placeholder="Your name"
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              required
-              autoFocus
-              data-testid="author-name-input"
-              className="w-full mb-2 rounded border border-zinc-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            <textarea
-              placeholder="Leave a comment…"
-              value={commentBody}
-              onChange={(e) => setCommentBody(e.target.value)}
-              required
-              rows={3}
-              data-testid="comment-body-input"
-              className="w-full mb-2 rounded border border-zinc-300 px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            {submitError && (
-              <p className="text-xs text-red-600 mb-1">{submitError}</p>
-            )}
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setPendingPin(null)}
-                className="text-xs text-zinc-500 hover:text-zinc-700 px-2 py-1 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={
-                  submitting ||
-                  !authorName.trim() ||
-                  !commentBody.trim()
-                }
-                data-testid="submit-comment-button"
-                className="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-3 py-1 rounded transition-colors"
-              >
-                {submitting ? "Saving…" : "Post"}
-              </button>
-            </div>
-          </form>
+          <div
+            style={{
+              background: "var(--color-base)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 12,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              overflow: "hidden",
+            }}
+          >
+            <form onSubmit={handleSubmit}>
+                {/* Name input — always rendered so tests can always find it.
+                    Pre-filled from localStorage; de-emphasised when name is known. */}
+                <div style={{ padding: "10px 12px 0" }}>
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={authorName}
+                    onChange={(e) => setAuthorName(e.target.value)}
+                    required
+                    autoFocus={!nameIsKnown}
+                    data-testid="author-name-input"
+                    style={{
+                      width: "100%",
+                      background: "var(--color-surface)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: 8,
+                      padding: "8px 10px",
+                      fontSize: nameIsKnown ? 12 : 14,
+                      color: nameIsKnown ? "var(--color-text-tertiary)" : "var(--color-text-primary)",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      transition: "border-color 150ms ease-out, box-shadow 150ms ease-out",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "var(--color-accent)";
+                      e.target.style.boxShadow = "0 0 0 3px var(--color-accent-subtle)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "var(--color-border)";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  />
+                </div>
+
+                {/* Comment body */}
+                <div style={{ padding: "8px 12px 0" }}>
+                  <textarea
+                    placeholder="Leave a comment…"
+                    value={commentBody}
+                    onChange={(e) => setCommentBody(e.target.value)}
+                    required
+                    rows={3}
+                    autoFocus={nameIsKnown}
+                    data-testid="comment-body-input"
+                    style={{
+                      width: "100%",
+                      background: "var(--color-surface)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: 8,
+                      padding: "8px 10px",
+                      fontSize: 14,
+                      color: "var(--color-text-primary)",
+                      resize: "none",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      lineHeight: 1.5,
+                      transition: "border-color 150ms ease-out, box-shadow 150ms ease-out",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "var(--color-accent)";
+                      e.target.style.boxShadow = "0 0 0 3px var(--color-accent-subtle)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "var(--color-border)";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  />
+                </div>
+
+                {submitError && (
+                  <p
+                    style={{
+                      margin: "4px 12px 0",
+                      fontSize: 12,
+                      color: "var(--color-danger)",
+                    }}
+                  >
+                    {submitError}
+                  </p>
+                )}
+
+                {/* Actions */}
+                <div
+                  style={{
+                    padding: "8px 12px 10px",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 8,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setPendingPin(null)}
+                    style={{
+                      fontSize: 13,
+                      color: "var(--color-text-tertiary)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "6px 8px",
+                      borderRadius: 6,
+                      transition: "color 150ms ease-out",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "var(--color-text-secondary)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "var(--color-text-tertiary)")
+                    }
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      submitting || !authorName.trim() || !commentBody.trim()
+                    }
+                    data-testid="submit-comment-button"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "white",
+                      background: "var(--color-accent)",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "6px 14px",
+                      cursor: "pointer",
+                      transition: "background 150ms ease-out, scale 150ms ease-out",
+                      opacity: submitting || !authorName.trim() || !commentBody.trim() ? 0.45 : 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!e.currentTarget.disabled)
+                        e.currentTarget.style.background = "var(--color-accent-hover)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "var(--color-accent)";
+                    }}
+                    className="active:[scale:0.97]"
+                  >
+                    {submitting ? "Saving…" : "Post"}
+                  </button>
+                </div>
+              </form>
+          </div>
         </div>
       )}
     </div>

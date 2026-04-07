@@ -34,7 +34,7 @@ export default function ReviewPage({ params }: Props) {
         if ("error" in json) setError(json.error);
         else setProject(json.project);
       })
-      .catch(() => setError("Failed to load project"));
+      .catch(() => setError("Couldn't load this project"));
   }, [token]);
 
   // Fetch initial comments once project is loaded
@@ -63,8 +63,38 @@ export default function ReviewPage({ params }: Props) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-        <p className="text-red-600 text-sm" data-testid="review-error">
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "var(--color-base)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 12,
+          padding: "0 24px",
+          textAlign: "center",
+        }}
+      >
+        <p
+          style={{
+            fontSize: 15,
+            fontWeight: 500,
+            color: "var(--color-text-primary)",
+            margin: 0,
+          }}
+        >
+          This link doesn&apos;t seem to work
+        </p>
+        {/* data-testid carries the raw API error so tests can match on its text */}
+        <p
+          style={{
+            fontSize: 14,
+            color: "var(--color-text-tertiary)",
+            margin: 0,
+          }}
+          data-testid="review-error"
+        >
           {error}
         </p>
       </div>
@@ -73,28 +103,91 @@ export default function ReviewPage({ params }: Props) {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-        <p className="text-zinc-400 text-sm">Loading…</p>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "var(--color-base)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* Pulse skeleton instead of a spinner */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: 320 }}>
+          {[80, 100, 60].map((w, i) => (
+            <div
+              key={i}
+              style={{
+                height: 14,
+                width: `${w}%`,
+                borderRadius: 6,
+                background: "var(--color-border)",
+                animation: `pulse-load 1.5s ease-in-out ${i * 0.15}s infinite`,
+              }}
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
-      <header className="bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between shrink-0">
-        <span className="text-lg font-semibold text-zinc-900">FeedbackPin</span>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "var(--color-base)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Header */}
+      <header
+        style={{
+          background: "var(--color-base)",
+          borderBottom: "1px solid var(--color-border)",
+          padding: "14px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+        }}
+      >
         <span
-          className="text-sm text-zinc-500 truncate max-w-sm"
+          style={{
+            fontSize: 15,
+            fontWeight: 500,
+            color: "var(--color-accent)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          FeedbackPin
+        </span>
+        <span
+          style={{
+            fontSize: 14,
+            color: "var(--color-text-secondary)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            maxWidth: 480,
+          }}
           data-testid="review-project-name"
         >
           {project.name}
         </span>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      {/* Body */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Canvas area */}
-        <main className="flex-1 overflow-y-auto px-6 py-8">
-          <div className="max-w-5xl mx-auto">
+        <main
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "40px 40px",
+          }}
+        >
+          <div style={{ maxWidth: 960, margin: "0 auto" }}>
             {project.screenshot_url ? (
               <Canvas
                 screenshotUrl={project.screenshot_url}
@@ -104,15 +197,40 @@ export default function ReviewPage({ params }: Props) {
                 onCommentAdded={addComment}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-200 bg-white py-24 text-center">
-                <p className="text-sm text-zinc-500">No preview available yet</p>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 12,
+                  border: "2px dashed var(--color-border)",
+                  background: "var(--color-surface)",
+                  padding: "80px 24px",
+                  textAlign: "center",
+                  gap: 8,
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: "var(--color-text-primary)",
+                    margin: 0,
+                  }}
+                >
+                  Preview isn&apos;t ready yet
+                </p>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--color-text-tertiary)",
+                    margin: 0,
+                  }}
+                >
+                  Check back in a moment — the screenshot is still being captured
+                </p>
               </div>
-            )}
-
-            {project.screenshot_url && (
-              <p className="mt-3 text-xs text-zinc-400 text-center">
-                Click anywhere on the image to leave a comment
-              </p>
             )}
           </div>
         </main>

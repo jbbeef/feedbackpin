@@ -20,11 +20,8 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
-  // Fetch projects with a count of their comments via embedded relation
   const { data: rawProjects } = await supabase
     .from("projects")
     .select("*, comments(count)")
@@ -35,32 +32,138 @@ export default async function DashboardPage() {
   const projects = rawProjects as unknown as ProjectWithCount[] | null;
 
   return (
-    <div className="min-h-full bg-zinc-50">
-      <header className="bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-zinc-900">FeedbackPin</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-zinc-500">{user.email}</span>
+    <div style={{ minHeight: "100vh", background: "var(--color-base)" }}>
+      {/* Header */}
+      <header
+        style={{
+          background: "var(--color-base)",
+          borderBottom: "1px solid var(--color-border)",
+          padding: "14px 32px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 15,
+            fontWeight: 500,
+            color: "var(--color-accent)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          FeedbackPin
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 13, color: "var(--color-text-tertiary)" }}>
+            {user.email}
+          </span>
           <LogoutButton />
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-semibold text-zinc-900">Projects</h2>
+      {/* Main content */}
+      <main style={{ maxWidth: 960, margin: "0 auto", padding: "48px 32px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 32,
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 500,
+              color: "var(--color-text-primary)",
+              margin: 0,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Projects
+          </h1>
+          {/* Tailwind hover classes — safe in server components (no event handlers) */}
           <a
             href="/projects/new"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+            className="hover:bg-[--color-accent-hover] active:[scale:0.97]"
+            style={{
+              background: "var(--color-accent)",
+              color: "white",
+              borderRadius: 8,
+              padding: "8px 18px",
+              fontSize: 14,
+              fontWeight: 500,
+              textDecoration: "none",
+              transition: "background 150ms ease-out",
+              display: "inline-block",
+            }}
           >
             New project
           </a>
         </div>
 
         {!projects || projects.length === 0 ? (
-          <p className="text-zinc-500 text-sm">
-            No projects yet. Create one to get started.
-          </p>
+          /* Human empty state */
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "80px 24px",
+              borderRadius: 12,
+              border: "2px dashed var(--color-border)",
+              textAlign: "center",
+              gap: 12,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 15,
+                fontWeight: 500,
+                color: "var(--color-text-primary)",
+                margin: 0,
+              }}
+            >
+              You don&apos;t have any projects yet
+            </p>
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--color-text-tertiary)",
+                margin: 0,
+              }}
+            >
+              Create your first project to get started
+            </p>
+            <a
+              href="/projects/new"
+              className="hover:bg-[--color-accent-hover]"
+              style={{
+                marginTop: 8,
+                background: "var(--color-accent)",
+                color: "white",
+                borderRadius: 8,
+                padding: "8px 18px",
+                fontSize: 14,
+                fontWeight: 500,
+                textDecoration: "none",
+                transition: "background 150ms ease-out",
+                display: "inline-block",
+              }}
+            >
+              New project
+            </a>
+          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            style={{
+              display: "grid",
+              gap: 16,
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            }}
+          >
             {projects.map((project) => {
               const commentCount = project.comments?.[0]?.count ?? 0;
               return (

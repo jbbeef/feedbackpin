@@ -42,7 +42,7 @@ feedbackpin/
     │   ├── login/page.tsx           # Auth page (sign up + sign in)
     │   ├── projects/
     │   │   ├── new/page.tsx         # Create project wizard
-    │   │   └── [id]/page.tsx        # Owner project view (canvas + sidebar)
+    │   │   └── [id]/page.tsx        # Owner project view (canvas + sidebar with resolve/reopen)
     │   ├── review/[token]/page.tsx  # Public reviewer canvas (no auth)
     │   └── api/
     │       ├── projects/
@@ -76,7 +76,8 @@ cp .env.example .env.local
 # Fill in .env.local with real Supabase + Stripe keys
 
 npm run dev
-# App available at http://localhost:3000
+# Starts BOTH the Next.js app on :3000 AND the screenshot worker on :3001
+# Uses `concurrently --kill-others` — Ctrl+C stops everything cleanly
 ```
 
 Or use the convenience script:
@@ -89,6 +90,14 @@ bash init.sh
 
 ```bash
 npx playwright test
+# Runs the main + auth projects (30 tests). Excludes screenshot tests (OOM risk).
+```
+
+To run screenshot tests (F007) — requires the dev server to already be running:
+
+```bash
+npm run dev   # in one terminal (starts Next.js + worker together)
+npx playwright test --project=screenshot   # in another terminal
 ```
 
 To run in headed mode for debugging:
@@ -134,6 +143,118 @@ const res = await fetch(
 ```
 
 This is implemented in `src/app/api/projects/upload/route.ts`. Apply the same pattern for any future server-side storage writes.
+
+## Design system — follow this on every UI task
+
+### Philosophy
+FeedbackPin should feel like Loom: approachable enough that a non-technical client opens a link and immediately knows what to do, refined enough that a senior designer isn't embarrassed to send it. Warm, human, considered. Not a power tool, not a toy.
+
+### Colour tokens
+Use CSS custom properties throughout. Never hardcode hex values in components.
+
+Light mode:
+- `--color-base: #FAFAF8` (page background — warm white, not pure white)
+- `--color-surface: #F5F4F0` (card backgrounds)
+- `--color-border: #E8E6E0` (all borders)
+- `--color-accent: #D97036` (primary interactive — buttons, pins, active states)
+- `--color-accent-hover: #C4622C` (accent hover state)
+- `--color-accent-subtle: #FBF0E9` (accent tint backgrounds)
+- `--color-text-primary: #1A1917`
+- `--color-text-secondary: #6B6860`
+- `--color-text-tertiary: #9C9A94`
+- `--color-success: #3D9970`
+- `--color-danger: #C0392B`
+
+Dark mode (`prefers-color-scheme: dark`):
+- `--color-base: #1A1917`
+- `--color-surface: #222220`
+- `--color-border: #2E2D2A`
+- `--color-accent: #D97036` (same)
+- `--color-accent-hover: #E8824A`
+- `--color-accent-subtle: #2A2118`
+- `--color-text-primary: #F0EEE8`
+- `--color-text-secondary: #9C9A94`
+- `--color-text-tertiary: #6B6860`
+
+### Typography
+Font stack: `'Inter', 'Geist', system-ui, sans-serif`
+Weights: 400 (body), 500 (headings, labels, buttons) — never 600 or 700
+Sizes: 16px body, 15px secondary body, 13px labels/metadata, 12px minimum
+Line height: 1.65 body, 1.4 headings
+Heading colour: `--color-text-primary` at weight 500, never bold
+
+### Shape language
+Border radius:
+- Cards and containers: 12px
+- Buttons and inputs: 8px
+- Small elements (badges, tags, pills): 6px
+- Comment pins: 50% (circle)
+- Never mix sharp and rounded in the same component
+
+### Spacing
+- Card internal padding: 24px
+- Section gaps: 32–48px
+- Component gaps: 12–16px
+- Always err toward more whitespace, never less
+
+### Motion — every interactive element must follow these rules
+- Transitions: 150ms ease-out for colour/opacity, 200ms ease-out for transform
+- Button press: `transform: scale(0.97)` on `:active`
+- Hover states: 120ms transition, `--color-surface` background
+- Panel/modal entry: opacity 0→1 + `translateY(8px→0)`, 200ms ease-out
+- Comment pin drop: `scale(0)→scale(1.05)→scale(1)`, 250ms, `cubic-bezier(0.34, 1.56, 0.64, 1)`
+- Loading pulse: opacity 0.4→1→0.4, 1.5s ease-in-out infinite
+- Never use spinning loaders — use skeleton screens or pulse animations
+- Always add: `@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }`
+
+### Comment pins
+- Size: 28px diameter circle
+- Background: `--color-accent`
+- Text: white, 12px, weight 500
+- Shadow: `0 2px 8px rgba(0,0,0,0.15)`
+- Hover: `scale(1.1)`, transition 150ms
+- Selected: `scale(1.15)` + 2px accent ring (`outline: 2px solid --color-accent`, `outline-offset: 2px`)
+- Resolved: background `--color-text-tertiary`, opacity 0.6, `scale(0.9)`
+- Entry animation: pin drop spring (see Motion above)
+
+### Buttons
+- Primary: background `--color-accent`, text white, 8px radius, 14px font, weight 500, `10px 20px` padding
+- Primary hover: background `--color-accent-hover`
+- Secondary: background transparent, border `1px solid --color-border`, text `--color-text-primary`
+- Destructive: background `--color-danger`, text white
+- All buttons: transition 150ms, `scale(0.97)` on active, `cursor: pointer`
+
+### Inputs and forms
+- Border: `1px solid --color-border`
+- Border radius: 8px
+- Padding: `10px 14px`
+- Font size: 15px
+- Focus: `border-color --color-accent`, `box-shadow: 0 0 0 3px --color-accent-subtle`
+- Placeholder: `--color-text-tertiary`
+- Background: `--color-base`
+
+### Empty states
+Every empty state must have:
+1. A short human message (not "No data found" — write like a person)
+2. A clear next action (button or instruction)
+3. Never just a blank screen
+
+### Reviewer canvas — special rules
+This is the most important screen. The reviewer is often a non-technical client.
+- Show a visible click hint before any interaction: subtle pulsing tooltip "Click anywhere to leave feedback"
+- Name input appears once, is saved to localStorage, never asked again
+- Comment form: textarea + send button only, nothing else
+- Successful pin drop: spring animation + brief success state on the form before closing
+- Existing pins always visible, numbered sequentially
+- Resolved pins visually muted but still visible
+
+### What to never do
+- Never use pure `#FFFFFF` or `#000000`
+- Never use font-weight 600 or 700
+- Never use a spinning loader
+- Never show a blank empty state without a message and action
+- Never use blue as the primary accent — this is a warm product
+- Never hardcode colours — always use CSS custom properties
 
 ## What is Explicitly Out of Scope for MVP
 

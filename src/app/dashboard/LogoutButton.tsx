@@ -8,14 +8,31 @@ export default function LogoutButton() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    // Full-page navigation clears the session cookie reliably on Next.js 16.
     window.location.href = "/login";
   }
 
   return (
     <button
       onClick={handleLogout}
-      className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+      style={{
+        fontSize: 13,
+        fontWeight: 500,
+        color: "var(--color-text-tertiary)",
+        background: "none",
+        border: "1px solid var(--color-border)",
+        borderRadius: 8,
+        padding: "6px 12px",
+        cursor: "pointer",
+        transition: "color 150ms ease-out, border-color 150ms ease-out",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = "var(--color-text-primary)";
+        e.currentTarget.style.borderColor = "var(--color-text-tertiary)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = "var(--color-text-tertiary)";
+        e.currentTarget.style.borderColor = "var(--color-border)";
+      }}
     >
       Log out
     </button>

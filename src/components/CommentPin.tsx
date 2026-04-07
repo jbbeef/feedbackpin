@@ -1,13 +1,24 @@
+"use client";
+
 interface Props {
   number: number;
   xPercent: number;
   yPercent: number;
-  /** Called when the pin is clicked. Receives the MouseEvent so callers can stopPropagation. */
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  resolved?: boolean;
 }
 
-/** A numbered circular pin rendered at an absolute percentage position over the canvas. */
-export default function CommentPin({ number, xPercent, yPercent, onClick }: Props) {
+/**
+ * A numbered circular pin rendered at an absolute percentage position over
+ * the canvas. Plays a spring entry animation on mount.
+ */
+export default function CommentPin({
+  number,
+  xPercent,
+  yPercent,
+  onClick,
+  resolved = false,
+}: Props) {
   return (
     <button
       data-pin
@@ -20,10 +31,28 @@ export default function CommentPin({ number, xPercent, yPercent, onClick }: Prop
         position: "absolute",
         left: `${xPercent}%`,
         top: `${yPercent}%`,
-        transform: "translate(-50%, -50%)",
+        width: 28,
+        height: 28,
+        borderRadius: "50%",
+        background: resolved ? "var(--color-text-tertiary)" : "var(--color-accent)",
+        opacity: resolved ? 0.6 : 1,
+        border: "2px solid rgba(255,255,255,0.9)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+        color: "white",
+        fontSize: 12,
+        fontWeight: 500,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         zIndex: 10,
+        // Spring entry — only plays on first mount (React reuses keyed elements)
+        animation: "pin-drop 250ms cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        // Hover/active transitions via CSS scale property (composes with transform)
+        transition: "scale 150ms ease-out, box-shadow 150ms ease-out",
       }}
-      className="w-7 h-7 rounded-full bg-indigo-600 border-2 border-white shadow-md flex items-center justify-center text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+      // Tailwind v4: CSS `scale` property composes independently with transform
+      className="hover:[scale:1.1] active:[scale:0.93]"
     >
       {number}
     </button>

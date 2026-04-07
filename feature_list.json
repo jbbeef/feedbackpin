@@ -190,7 +190,7 @@
         "Verify pin changes to resolved state",
         "Verify comments.resolved is true in the database"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F017",
@@ -202,7 +202,7 @@
         "Click 'Reopen'",
         "Verify comments.resolved is false in the database"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F018",

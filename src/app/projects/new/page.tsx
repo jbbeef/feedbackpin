@@ -19,13 +19,9 @@ export default function NewProjectPage() {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /** Validates and sets the selected image file. */
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
-    if (!file) {
-      setImageFile(null);
-      return;
-    }
+    if (!file) { setImageFile(null); return; }
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
       setError("Please upload a PNG, JPG, or WebP image.");
       setImageFile(null);
@@ -40,7 +36,6 @@ export default function NewProjectPage() {
     setImageFile(file);
   }
 
-  /** Handles form submission — uploads image to Storage if needed, then creates the project. */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -56,23 +51,15 @@ export default function NewProjectPage() {
           setSubmitting(false);
           return;
         }
-
         const fd = new FormData();
         fd.append("file", imageFile);
-
-        const uploadRes = await fetch("/api/projects/upload", {
-          method: "POST",
-          body: fd,
-        });
-
+        const uploadRes = await fetch("/api/projects/upload", { method: "POST", body: fd });
         const uploadJson: UploadResponse = await uploadRes.json();
-
         if (!uploadRes.ok || "error" in uploadJson) {
           setError("error" in uploadJson ? uploadJson.error : "Upload failed");
           setSubmitting(false);
           return;
         }
-
         screenshotUrl = uploadJson.publicUrl;
         storagePath = uploadJson.path;
       }
@@ -89,7 +76,6 @@ export default function NewProjectPage() {
       });
 
       const json: ProjectsPostResponse = await res.json();
-
       if (!res.ok || "error" in json) {
         setError("error" in json ? json.error : "Failed to create project");
         setSubmitting(false);
@@ -103,34 +89,105 @@ export default function NewProjectPage() {
     }
   }
 
-  /** Returns true when the form is ready to submit. */
   function canSubmit() {
     if (submitting) return false;
     if (!name.trim()) return false;
     if (type === "url") return sourceUrl.trim().length > 0;
     if (type === "image") return imageFile !== null;
-    return false; // pdf not yet implemented
+    return false;
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "var(--color-base)",
+    border: "1px solid var(--color-border)",
+    borderRadius: 8,
+    padding: "10px 14px",
+    fontSize: 15,
+    color: "var(--color-text-primary)",
+    outline: "none",
+    boxSizing: "border-box",
+    transition: "border-color 150ms ease-out, box-shadow 150ms ease-out",
+  };
+
+  const inputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = "var(--color-accent)";
+    e.target.style.boxShadow = "0 0 0 3px var(--color-accent-subtle)";
+  };
+
+  const inputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = "var(--color-border)";
+    e.target.style.boxShadow = "none";
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
-      <header className="bg-white border-b border-zinc-200 px-6 py-4">
-        <a href="/dashboard" className="text-lg font-semibold text-zinc-900">
+    <div style={{ minHeight: "100vh", background: "var(--color-base)", display: "flex", flexDirection: "column" }}>
+      {/* Header */}
+      <header
+        style={{
+          background: "var(--color-base)",
+          borderBottom: "1px solid var(--color-border)",
+          padding: "14px 32px",
+        }}
+      >
+        <a
+          href="/dashboard"
+          style={{
+            fontSize: 15,
+            fontWeight: 500,
+            color: "var(--color-accent)",
+            textDecoration: "none",
+            letterSpacing: "-0.01em",
+          }}
+        >
           FeedbackPin
         </a>
       </header>
 
-      <main className="flex-1 flex items-start justify-center px-6 py-16">
-        <div className="w-full max-w-lg">
-          <h1 className="text-2xl font-semibold text-zinc-900 mb-8">
+      {/* Main */}
+      <main
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          padding: "56px 24px",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 480,
+            animation: "panel-enter 200ms ease-out both",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 500,
+              color: "var(--color-text-primary)",
+              margin: "0 0 32px",
+              letterSpacing: "-0.01em",
+            }}
+          >
             New project
           </h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: 24 }}
+          >
+            {/* Project name */}
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-zinc-700 mb-1"
+                style={{
+                  display: "block",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--color-text-secondary)",
+                  marginBottom: 8,
+                }}
               >
                 Project name
               </label>
@@ -141,28 +198,43 @@ export default function NewProjectPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My design review"
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                style={inputStyle}
+                onFocus={inputFocus}
+                onBlur={inputBlur}
               />
             </div>
 
+            {/* Type selector */}
             <div>
-              <span className="block text-sm font-medium text-zinc-700 mb-2">
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--color-text-secondary)",
+                  marginBottom: 8,
+                }}
+              >
                 Project type
               </span>
-              <div className="flex gap-2">
+              <div style={{ display: "flex", gap: 8 }}>
                 {(["url", "image", "pdf"] as ProjectType[]).map((t) => (
                   <button
                     key={t}
                     type="button"
-                    onClick={() => {
-                      setType(t);
-                      setError(null);
+                    onClick={() => { setType(t); setError(null); }}
+                    style={{
+                      flex: 1,
+                      borderRadius: 8,
+                      border: `1px solid ${type === t ? "var(--color-accent)" : "var(--color-border)"}`,
+                      background: type === t ? "var(--color-accent-subtle)" : "var(--color-surface)",
+                      color: type === t ? "var(--color-accent)" : "var(--color-text-secondary)",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      padding: "9px 0",
+                      cursor: "pointer",
+                      transition: "all 150ms ease-out",
                     }}
-                    className={`flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                      type === t
-                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                        : "border-zinc-300 bg-white text-zinc-600 hover:border-zinc-400"
-                    }`}
                   >
                     {t === "url" ? "URL" : t === "image" ? "Image" : "PDF"}
                   </button>
@@ -170,11 +242,18 @@ export default function NewProjectPage() {
               </div>
             </div>
 
+            {/* URL input */}
             {type === "url" && (
               <div>
                 <label
                   htmlFor="source_url"
-                  className="block text-sm font-medium text-zinc-700 mb-1"
+                  style={{
+                    display: "block",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: 8,
+                  }}
                 >
                   URL to capture
                 </label>
@@ -185,26 +264,39 @@ export default function NewProjectPage() {
                   value={sourceUrl}
                   onChange={(e) => setSourceUrl(e.target.value)}
                   placeholder="https://example.com"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  style={inputStyle}
+                  onFocus={inputFocus}
+                  onBlur={inputBlur}
                 />
               </div>
             )}
 
+            {/* Image upload */}
             {type === "image" && (
               <div>
                 <label
                   htmlFor="image_file"
-                  className="block text-sm font-medium text-zinc-700 mb-1"
+                  style={{
+                    display: "block",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: 8,
+                  }}
                 >
                   Image file
                 </label>
                 <div
-                  className={`rounded-lg border-2 border-dashed px-6 py-8 text-center cursor-pointer transition-colors ${
-                    imageFile
-                      ? "border-indigo-400 bg-indigo-50"
-                      : "border-zinc-300 hover:border-zinc-400"
-                  }`}
                   onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    borderRadius: 12,
+                    border: `2px dashed ${imageFile ? "var(--color-accent)" : "var(--color-border)"}`,
+                    background: imageFile ? "var(--color-accent-subtle)" : "var(--color-surface)",
+                    padding: "32px 24px",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    transition: "all 150ms ease-out",
+                  }}
                 >
                   <input
                     id="image_file"
@@ -215,18 +307,18 @@ export default function NewProjectPage() {
                     onChange={handleFileChange}
                   />
                   {imageFile ? (
-                    <p className="text-sm text-indigo-700 font-medium">
+                    <p style={{ fontSize: 14, fontWeight: 500, color: "var(--color-accent)", margin: 0 }}>
                       {imageFile.name}{" "}
-                      <span className="text-indigo-500 font-normal">
+                      <span style={{ fontWeight: 400, color: "var(--color-text-tertiary)" }}>
                         ({(imageFile.size / 1024 / 1024).toFixed(1)} MB)
                       </span>
                     </p>
                   ) : (
                     <>
-                      <p className="text-sm font-medium text-zinc-700">
+                      <p style={{ fontSize: 14, fontWeight: 500, color: "var(--color-text-primary)", margin: "0 0 4px" }}>
                         Click to upload an image
                       </p>
-                      <p className="text-xs text-zinc-500 mt-1">
+                      <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", margin: 0 }}>
                         PNG, JPG, WebP — up to {MAX_FILE_SIZE_MB} MB
                       </p>
                     </>
@@ -235,14 +327,32 @@ export default function NewProjectPage() {
               </div>
             )}
 
+            {/* PDF placeholder */}
             {type === "pdf" && (
-              <div className="rounded-lg border-2 border-dashed border-zinc-300 px-6 py-10 text-center">
-                <p className="text-sm text-zinc-500">PDF upload coming soon.</p>
+              <div
+                style={{
+                  borderRadius: 12,
+                  border: "2px dashed var(--color-border)",
+                  background: "var(--color-surface)",
+                  padding: "32px 24px",
+                  textAlign: "center",
+                }}
+              >
+                <p style={{ fontSize: 14, color: "var(--color-text-tertiary)", margin: 0 }}>
+                  PDF upload coming soon.
+                </p>
               </div>
             )}
 
             {error && (
-              <p className="text-sm text-red-600" role="alert">
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--color-danger)",
+                  margin: 0,
+                }}
+                role="alert"
+              >
                 {error}
               </p>
             )}
@@ -250,14 +360,43 @@ export default function NewProjectPage() {
             <button
               type="submit"
               disabled={!canSubmit()}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              style={{
+                background: "var(--color-accent)",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 20px",
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: canSubmit() ? "pointer" : "not-allowed",
+                opacity: canSubmit() ? 1 : 0.45,
+                transition: "background 150ms ease-out, scale 150ms ease-out",
+                marginTop: 4,
+              }}
+              onMouseEnter={(e) => {
+                if (canSubmit()) e.currentTarget.style.background = "var(--color-accent-hover)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--color-accent)";
+              }}
+              className="active:[scale:0.97]"
             >
-              {submitting ? "Creating..." : "Create project"}
+              {submitting ? "Creating…" : "Create project"}
             </button>
 
             <a
               href="/dashboard"
-              className="block text-center text-sm text-zinc-500 hover:text-zinc-700"
+              style={{
+                display: "block",
+                textAlign: "center",
+                fontSize: 13,
+                color: "var(--color-text-tertiary)",
+                textDecoration: "none",
+                marginTop: -8,
+                transition: "color 150ms ease-out",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-text-secondary)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-text-tertiary)")}
             >
               Cancel
             </a>

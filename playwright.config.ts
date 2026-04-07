@@ -31,6 +31,14 @@ export default defineConfig({
       // Runs after main — session invalidation from signOut doesn't affect other tests
       dependencies: ['main'],
     },
+    {
+      // Screenshot project: run manually against a live dev server only.
+      // Excluded from default test run (not a dependency of main/auth) because
+      // the nested Chromium inside the screenshot worker can OOM on RAM-constrained machines.
+      // Usage: npx playwright test --project=screenshot
+      name: 'screenshot',
+      testMatch: ['**/screenshot.spec.ts'],
+    },
   ],
   webServer: [
     {
